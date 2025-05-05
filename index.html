@@ -256,7 +256,7 @@
           output.innerHTML = syntaxHighlight(prettyJson);
         } catch (e) {
           error.textContent = 'Could not fully parse the JSON. Displaying best effort.';
-          output.innerHTML = syntaxHighlight(fixedInput);
+          output.innerHTML = syntaxHighlight(highlightUnexpectedChars(fixedInput));
         }
       }
 
@@ -282,6 +282,32 @@
           toast.classList.remove('show');
         }, 2000);
       }
+      function highlightUnexpectedChars(input) {
+  let cleanedInput = input;
+  try {
+    // Try parsing to confirm if it's valid
+    JSON.parse(input);
+    return input; // No errors, return original
+  } catch (e) {
+    // Get error position if available
+    const message = e.message;
+    const match = message.match(/position (\d+)/);
+    if (match) {
+      const pos = parseInt(match[1], 10);
+      // Wrap the problematic character at that position
+      return (
+        cleanedInput.slice(0, pos) +
+        '<span style="background: yellow">' +
+        cleanedInput.charAt(pos) +
+        '</span>' +
+        cleanedInput.slice(pos + 1)
+      );
+    } else {
+      // If we can't find the position, highlight nothing
+      return cleanedInput;
+    }
+  }
+}
     </script>
 </body>
 </html>
