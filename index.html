@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +18,7 @@
       transition: background 0.3s, color 0.3s;
       position: relative;
     }
+
     .container {
       background: white;
       padding: 2rem;
@@ -26,11 +28,13 @@
       max-width: 960px;
       text-align: center;
     }
+
     h1 {
       font-size: 2rem;
       margin-bottom: 1rem;
       color: #333;
     }
+
     textarea {
       width: 100%;
       height: 180px;
@@ -42,12 +46,14 @@
       resize: vertical;
       margin-bottom: 1rem;
     }
+
     .buttons {
       display: flex;
       justify-content: center;
       gap: 1rem;
       margin-bottom: 1rem;
     }
+
     .buttons button {
       padding: 0.7rem 1.5rem;
       font-size: 1rem;
@@ -57,26 +63,32 @@
       cursor: pointer;
       transition: background 0.3s, transform 0.2s;
     }
+
     .parse-btn {
       background: #007bff;
       color: white;
     }
+
     .parse-btn:hover {
       background: #0056b3;
       transform: translateY(-2px);
     }
+
     .clear-btn {
       background: #dc3545;
       color: white;
     }
+
     .clear-btn:hover {
       background: #b52b38;
       transform: translateY(-2px);
     }
+
     .output-container {
       position: relative;
       margin-top: 1rem;
     }
+
     .output {
       background: #f9fafb;
       padding: 1rem;
@@ -89,11 +101,27 @@
       font-family: monospace;
       overflow-x: auto;
     }
-    .output span.key { color: #6a1b9a; }
-    .output span.string { color: #2e7d32; }
-    .output span.number { color: #0277bd; }
-    .output span.boolean { color: #c62828; }
-    .output span.null { color: #757575; }
+
+    .output span.key {
+      color: #6a1b9a;
+    }
+
+    .output span.string {
+      color: #2e7d32;
+    }
+
+    .output span.number {
+      color: #0277bd;
+    }
+
+    .output span.boolean {
+      color: #c62828;
+    }
+
+    .output span.null {
+      color: #757575;
+    }
+
     .copy-btn {
       position: absolute;
       top: 10px;
@@ -107,36 +135,58 @@
       cursor: pointer;
       transition: background 0.3s;
     }
+
     .copy-btn:hover {
       background: #218838;
     }
+
     .error {
       color: #dc3545;
       margin-top: 1rem;
       font-weight: bold;
     }
+
     .dark-mode {
       background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
       color: #f0f0f0;
     }
+
     .dark-mode .container {
       background: #2c2c2c;
       color: #f0f0f0;
     }
+
     .dark-mode .output {
       background: #1e1e1e;
       border-color: #444;
     }
-    .dark-mode .output span.key { color: #d1aaff; }
-    .dark-mode .output span.string { color: #a5d6a7; }
-    .dark-mode .output span.number { color: #81d4fa; }
-    .dark-mode .output span.boolean { color: #ef9a9a; }
-    .dark-mode .output span.null { color: #bdbdbd; }
+
+    .dark-mode .output span.key {
+      color: #d1aaff;
+    }
+
+    .dark-mode .output span.string {
+      color: #a5d6a7;
+    }
+
+    .dark-mode .output span.number {
+      color: #81d4fa;
+    }
+
+    .dark-mode .output span.boolean {
+      color: #ef9a9a;
+    }
+
+    .dark-mode .output span.null {
+      color: #bdbdbd;
+    }
+
     .dark-mode textarea {
       background: #333;
       border: 1px solid #555;
       color: #eee;
     }
+
     .dark-mode-toggle {
       position: absolute;
       top: 20px;
@@ -150,9 +200,11 @@
       cursor: pointer;
       transition: background 0.3s;
     }
+
     .dark-mode-toggle:hover {
       background: #777;
     }
+
     .toast {
       position: fixed;
       bottom: 30px;
@@ -167,12 +219,14 @@
       font-size: 1rem;
       z-index: 1000;
     }
+
     .toast.show {
       opacity: 1;
       pointer-events: auto;
     }
   </style>
 </head>
+
 <body>
 
   <button class="dark-mode-toggle" onclick="toggleDarkMode()">
@@ -237,11 +291,13 @@
         let fixedInput = input;
 
         try {
+          // Quick fixes for single quotes, unquoted keys, etc.
           fixedInput = fixedInput.replace(/'([^']*)'/g, '"$1"');
           fixedInput = fixedInput.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
           fixedInput = fixedInput.replace(/,(\s*[}\]])/g, '$1');
           fixedInput = fixedInput.replace(/:\s*(\d*\*+\d*)/g, ': "$1"');
 
+          // Balance braces just in case (safety net)
           const openBraces = (fixedInput.match(/{/g) || []).length;
           const closeBraces = (fixedInput.match(/}/g) || []).length;
 
@@ -251,10 +307,15 @@
             fixedInput = '{'.repeat(closeBraces - openBraces) + fixedInput;
           }
 
+          // ✅ Try parsing the cleaned input
           const jsonObj = JSON.parse(fixedInput);
           const prettyJson = JSON.stringify(jsonObj, null, 2);
+
+          // 🟢 Success: ONLY highlight with syntaxHighlight (no extra issue-highlighting)
           output.innerHTML = syntaxHighlight(prettyJson);
+
         } catch (e) {
+          // 🔴 Failed to parse: Show best effort and highlight issues
           error.textContent = 'Could not fully parse the JSON. Displaying best effort.';
           output.innerHTML = syntaxHighlight(highlightJsonIssues(fixedInput));
         }
@@ -283,34 +344,35 @@
         }, 2000);
       }
       function highlightJsonIssues(input) {
-      let output = input;
+        let output = input;
 
-      // Highlight unquoted keys (e.g., request: ...)
-      output = output.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, function(match, p1, p2) {
-        return `${p1}<span style="background: yellow">${p2}</span>:`;
-      });
+        // Highlight unquoted keys (e.g., request: ...)
+        output = output.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, function (match, p1, p2) {
+          return `${p1}<span style="background: yellow">${p2}</span>:`;
+        });
 
-      // Highlight object-like values (e.g., ValitorNotification { ... })
-      output = output.replace(/:\s*([A-Za-z0-9_]+\s*\{)/g, function(match, p1) {
-        return match.replace(p1, `<span style="background: yellow">${p1}</span>`);
-      });
+        // Highlight object-like values (e.g., ValitorNotification { ... })
+        output = output.replace(/:\s*([A-Za-z0-9_]+\s*\{)/g, function (match, p1) {
+          return match.replace(p1, `<span style="background: yellow">${p1}</span>`);
+        });
 
-      // Highlight unquoted strings that are not null/true/false
-      output = output.replace(/:\s*([A-Za-z_][A-Za-z0-9_.-]*)([\s,}\]])/g, function(match, val, after) {
-        if (['true', 'false', 'null'].includes(val)) return match; // Skip valid JSON values
-        return `: <span style="background: yellow">${val}</span>${after}`;
-      });
+        // Highlight unquoted strings that are not null/true/false
+        output = output.replace(/:\s*([A-Za-z_][A-Za-z0-9_.-]*)([\s,}\]])/g, function (match, val, after) {
+          if (['true', 'false', 'null'].includes(val)) return match; // Skip valid JSON values
+          return `: <span style="background: yellow">${val}</span>${after}`;
+        });
 
-      // Highlight undefined
-      output = output.replace(/\bundefined\b/g, `<span style="background: yellow">undefined</span>`);
+        // Highlight undefined
+        output = output.replace(/\bundefined\b/g, `<span style="background: yellow">undefined</span>`);
 
-      // Highlight date-like literals (2025-05-01T... without quotes)
-      output = output.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[^\s,}\]]*)/g, function(match, val) {
-        return `: <span style="background: yellow">${val}</span>`;
-      });
+        // Highlight date-like literals (2025-05-01T... without quotes)
+        output = output.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[^\s,}\]]*)/g, function (match, val) {
+          return `: <span style="background: yellow">${val}</span>`;
+        });
 
-      return output;
-    }
+        return output;
+      }
     </script>
 </body>
+
 </html>
