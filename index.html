@@ -343,6 +343,35 @@
           toast.classList.remove('show');
         }, 2000);
       }
+
+      function highlightJsonIssues(input) {
+        let output = input;
+
+        // First: escape any existing < and > to avoid breaking things if user pastes HTML
+        output = output.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // Highlight unquoted keys (e.g., request: ...)
+        output = output.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, function (match, p1, p2) {
+          return `${p1}<span style="background: yellow">${p2}</span>:`;
+        });
+
+        // Highlight unquoted values like undefined
+        output = output.replace(/:\s*(undefined)([\s,}\]])/g, function (match, val, after) {
+          return `: <span style="background: yellow">${val}</span>${after}`;
+        });
+
+        // Highlight unquoted object-like values (e.g., ValitorNotification { ... })
+        output = output.replace(/:\s*([A-Za-z0-9_]+\s*\{)/g, function (match, p1) {
+          return match.replace(p1, `<span style="background: yellow">${p1}</span>`);
+        });
+
+        // Highlight date-like literals (2025-05-01T... without quotes)
+        output = output.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[^\s,}\]]*)/g, function (match, val) {
+          return `: <span style="background: yellow">${val}</span>`;
+        });
+
+        return output;
+      }
     </script>
 </body>
 
