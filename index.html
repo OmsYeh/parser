@@ -256,7 +256,7 @@
           output.innerHTML = syntaxHighlight(prettyJson);
         } catch (e) {
           error.textContent = 'Could not fully parse the JSON. Displaying best effort.';
-          output.innerHTML = syntaxHighlight(highlightUnexpectedChars(fixedInput));
+          output.innerHTML = syntaxHighlight(highlightJsonIssues(fixedInput));
         }
       }
 
@@ -282,32 +282,35 @@
           toast.classList.remove('show');
         }, 2000);
       }
-      function highlightUnexpectedChars(input) {
-  let cleanedInput = input;
-  try {
-    // Try parsing to confirm if it's valid
-    JSON.parse(input);
-    return input; // No errors, return original
-  } catch (e) {
-    // Get error position if available
-    const message = e.message;
-    const match = message.match(/position (\d+)/);
-    if (match) {
-      const pos = parseInt(match[1], 10);
-      // Wrap the problematic character at that position
-      return (
-        cleanedInput.slice(0, pos) +
-        '<span style="background: yellow">' +
-        cleanedInput.charAt(pos) +
-        '</span>' +
-        cleanedInput.slice(pos + 1)
-      );
-    } else {
-      // If we can't find the position, highlight nothing
-      return cleanedInput;
+      function highlightJsonIssues(input) {
+      let output = input;
+
+      // Highlight unquoted keys (e.g., request: ...)
+      output = output.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, function(match, p1, p2) {
+        return `${p1}<span style="background: yellow">${p2}</span>:`;
+      });
+
+      // Highlight object-like values (e.g., ValitorNotification { ... })
+      output = output.replace(/:\s*([A-Za-z0-9_]+\s*\{)/g, function(match, p1) {
+        return match.replace(p1, `<span style="background: yellow">${p1}</span>`);
+      });
+
+      // Highlight unquoted strings that are not null/true/false
+      output = output.replace(/:\s*([A-Za-z_][A-Za-z0-9_.-]*)([\s,}\]])/g, function(match, val, after) {
+        if (['true', 'false', 'null'].includes(val)) return match; // Skip valid JSON values
+        return `: <span style="background: yellow">${val}</span>${after}`;
+      });
+
+      // Highlight undefined
+      output = output.replace(/\bundefined\b/g, `<span style="background: yellow">undefined</span>`);
+
+      // Highlight date-like literals (2025-05-01T... without quotes)
+      output = output.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[^\s,}\]]*)/g, function(match, val) {
+        return `: <span style="background: yellow">${val}</span>`;
+      });
+
+      return output;
     }
-  }
-}
     </script>
 </body>
 </html>
