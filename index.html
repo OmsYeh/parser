@@ -288,16 +288,20 @@
           return;
         }
 
-        let fixedInput = input;
-
         try {
-          // Quick fixes for single quotes, unquoted keys, etc.
+          // ✅ First: try parsing as-is
+          const jsonObj = JSON.parse(input);
+          const prettyJson = JSON.stringify(jsonObj, null, 2);
+          output.innerHTML = syntaxHighlight(prettyJson);
+        } catch (err) {
+          // 🔴 Only apply fixes if initial parse fails
+          let fixedInput = input;
+
           fixedInput = fixedInput.replace(/'([^']*)'/g, '"$1"');
           fixedInput = fixedInput.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
           fixedInput = fixedInput.replace(/,(\s*[}\]])/g, '$1');
           fixedInput = fixedInput.replace(/:\s*(\d*\*+\d*)/g, ': "$1"');
 
-          // Balance braces just in case (safety net)
           const openBraces = (fixedInput.match(/{/g) || []).length;
           const closeBraces = (fixedInput.match(/}/g) || []).length;
 
@@ -307,19 +311,17 @@
             fixedInput = '{'.repeat(closeBraces - openBraces) + fixedInput;
           }
 
-          // ✅ Try parsing the cleaned input
-          const jsonObj = JSON.parse(fixedInput);
-          const prettyJson = JSON.stringify(jsonObj, null, 2);
-
-          // 🟢 Success: ONLY highlight with syntaxHighlight (no extra issue-highlighting)
-          output.innerHTML = syntaxHighlight(prettyJson);
-
-        } catch (e) {
-          // 🔴 Failed to parse: Show best effort and highlight issues
-          error.textContent = 'Could not fully parse the JSON. Displaying best effort.';
-          output.innerHTML = syntaxHighlight(highlightJsonIssues(fixedInput));
+          try {
+            const jsonObj = JSON.parse(fixedInput);
+            const prettyJson = JSON.stringify(jsonObj, null, 2);
+            output.innerHTML = syntaxHighlight(prettyJson);
+          } catch (e2) {
+            error.textContent = 'Could not fully parse the JSON. Displaying best effort.';
+            output.innerHTML = syntaxHighlight(highlightJsonIssues(fixedInput));
+          }
         }
       }
+
 
       function clearFields() {
         document.getElementById('jsonInput').value = '';
